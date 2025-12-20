@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# service account
+service_account.json
+
+# Additional ignores
+.terraform*
+*.zip
+uv.lock
+.DS_Store
+

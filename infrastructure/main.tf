@@ -1,0 +1,14 @@
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "7.6.0"
+    }
+  }
+}
+
+provider "google" {
+  credentials = local.credentials_file
+  project     = var.gcp_project
+  region      = var.region
+}
