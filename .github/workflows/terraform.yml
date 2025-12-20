@@ -5,10 +5,14 @@ on:
     branches: [ "main" ]
     paths:
       - 'infrastructure/**'
+      - 'cloudfunction/**'
+      - '.github/workflows/terraform.yml'
   pull_request:
     branches: [ "main" ]
     paths:
       - 'infrastructure/**'
+      - 'cloudfunction/**'
+      - '.github/workflows/terraform.yml'
 
 env:
   TF_VERSION: '1.6.0'

@@ -7,8 +7,6 @@ terraform {
   }
 }
 
-# Test commit to trigger GitHub Actions workflow
-
 provider "google" {
   credentials = local.credentials_file
   project     = var.gcp_project
