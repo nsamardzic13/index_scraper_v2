@@ -31,6 +31,11 @@ jobs:
       with:
         terraform_version: ${{ env.TF_VERSION }}
 
+    - name: Setup GCP Credentials
+      run: |
+        echo '${{ secrets.GCP_SA_KEY }}' > service_account.json
+      working-directory: ./infrastructure
+
     - name: Terraform Format
       id: fmt
       run: terraform fmt -check
