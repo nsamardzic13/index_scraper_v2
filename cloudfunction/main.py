@@ -12,10 +12,10 @@ client = Client()
 client.setup_logging()
 
 
-# @functions_framework.http
-# def main(request: Request):
-def main():
-    category = os.environ["CATEGORY"]
+@functions_framework.http
+def main(request: Request):
+    request_json = request.get_json(silent=True)
+    category = request_json.get("category")
     current_date = datetime.now().strftime("%Y-%m-%d")
 
     requests_helper = RequestsHelper(category=category)
