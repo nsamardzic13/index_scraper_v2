@@ -15,7 +15,11 @@ client.setup_logging()
 @functions_framework.http
 def main(request: Request):
     request_json = request.get_json(silent=True)
-    category = request_json.get("category")
+    category = request_json.get("category") if request_json else None
+
+    if category is None:
+        raise ValueError("Category not provided in request body")
+
     current_date = datetime.now().strftime("%Y-%m-%d")
 
     requests_helper = RequestsHelper(category=category)
