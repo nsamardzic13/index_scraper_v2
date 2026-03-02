@@ -92,6 +92,3 @@ def main(request: Request):
 
     result = {"message": "Success"}
     return jsonify(result), 200
-
-
-main()
