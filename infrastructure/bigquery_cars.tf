@@ -9,7 +9,7 @@ resource "google_bigquery_table" "cars_parquet_external_table" {
 
     # Use wildcards to match all parquet files in cars folder
     source_uris = [
-      "gs://${google_storage_bucket.bucket.name}/data/cars/*.parquet"
+      "gs://${google_storage_bucket.bucket.name}/data/car/*.parquet"
     ]
 
     # Skip header rows and ignore unknown values to handle empty buckets
