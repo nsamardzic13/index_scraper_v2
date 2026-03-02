@@ -10,7 +10,7 @@ resource "google_bigquery_dataset" "bigquery" {
   }
 }
 
-resource "google_bigquery_table" "parquet_external_table" {
+resource "google_bigquery_table" "apartments_parquet_external_table" {
   dataset_id = google_bigquery_dataset.bigquery.dataset_id
   table_id   = "external_table_apartments"
 
@@ -18,9 +18,26 @@ resource "google_bigquery_table" "parquet_external_table" {
     autodetect    = true
     source_format = "PARQUET"
 
-    # Use wildcards to match all parquet files in any date folder
+    # Use wildcards to match all parquet files in flats-for-sale folder
     source_uris = [
-      "gs://${google_storage_bucket.bucket.name}/*.parquet"
+      "gs://${google_storage_bucket.bucket.name}/data/flats-for-sale/*.parquet"
+    ]
+  }
+
+  depends_on = [google_storage_bucket.bucket]
+}
+
+resource "google_bigquery_table" "cars_parquet_external_table" {
+  dataset_id = google_bigquery_dataset.bigquery.dataset_id
+  table_id   = "external_table_cars"
+
+  external_data_configuration {
+    autodetect    = true
+    source_format = "PARQUET"
+
+    # Use wildcards to match all parquet files in flats-for-sale folder
+    source_uris = [
+      "gs://${google_storage_bucket.bucket.name}/data/cars/*.parquet"
     ]
   }
 
@@ -43,7 +60,7 @@ resource "google_bigquery_table" "price_changes_view" {
           LAG(price) OVER (PARTITION BY url, neighborhood ORDER BY extractDate) AS previous_price,
           extractDate,
           LAG(extractDate) OVER (PARTITION BY url, neighborhood ORDER BY extractDate) AS previous_extractDate
-        FROM `${var.gcp_project}.${var.gcp_dataset}.${google_bigquery_table.parquet_external_table.table_id}`
+        FROM `${var.gcp_project}.${var.gcp_dataset}.${google_bigquery_table.apartments_parquet_external_table.table_id}`
       )
       SELECT *
       FROM previous_price_cte
@@ -68,7 +85,7 @@ resource "google_bigquery_table" "count_per_day_view" {
       select 
         date(substring(renewalTime, 1, 10)) as dt,
         count(*)
-      from `${var.gcp_project}.${var.gcp_dataset}.${google_bigquery_table.parquet_external_table.table_id}`
+      from `${var.gcp_project}.${var.gcp_dataset}.${google_bigquery_table.apartments_parquet_external_table.table_id}`
       group by 1
       order by 1 desc
       limit 100
@@ -88,7 +105,7 @@ resource "google_bigquery_table" "price_per_neighborhood_view" {
         select
           *,
           row_number() over (partition by url order by extractDate) rn
-        from `${var.gcp_project}.${var.gcp_dataset}.${google_bigquery_table.parquet_external_table.table_id}`
+        from `${var.gcp_project}.${var.gcp_dataset}.${google_bigquery_table.apartments_parquet_external_table.table_id}`
         where postedTime > '2025-01-01'
       )
       select 
@@ -100,6 +117,51 @@ resource "google_bigquery_table" "price_per_neighborhood_view" {
       where rn = 1
       group by 1
       order by 2 desc
+    EOF
+
+    use_legacy_sql = false
+  }
+}
+
+resource "google_bigquery_table" "new_ads_view" {
+  dataset_id          = google_bigquery_dataset.bigquery.dataset_id
+  table_id            = "${var.project_name}_new_ads_view"
+  deletion_protection = false
+  view {
+    query = <<EOF
+      WITH distinct_data AS (
+        SELECT
+          *,
+          LAG(price) OVER (
+            PARTITION BY url, neighborhood
+            ORDER BY extractDate
+          ) AS previous_price
+        from `${var.gcp_project}.${var.gcp_dataset}.${google_bigquery_table.apartments_parquet_external_table.table_id}`
+        WHERE
+          postedTime > '2025-01-01'
+          and area >= 60
+          and price BETWEEN 200001 AND 270001
+      )
+      SELECT
+        case
+          when previous_price is null
+            then 'Novi Oglas'
+          when previous_price < price
+            then 'Poskupljenje'
+          else
+            'Pojeftinjenje'
+        end as type,
+        neighborhood,
+        url,
+        area,
+        price,
+        previous_price,
+        postedTime,
+        renewalTime,
+      FROM distinct_data
+      WHERE
+        DATE(extractDate) = CURRENT_DATE() 
+        and (price != previous_price or previous_price is null)
     EOF
 
     use_legacy_sql = false

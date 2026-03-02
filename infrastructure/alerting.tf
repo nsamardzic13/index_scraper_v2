@@ -13,7 +13,7 @@ resource "google_monitoring_alert_policy" "function_failure" {
   conditions {
     display_name = "Cloud Function execution failures"
     condition_threshold {
-      filter          = "resource.type = \"cloud_function\" AND resource.labels.function_name = \"${google_cloudfunctions2_function.function.name}\" AND metric.type = \"cloudfunctions.googleapis.com/function/execution_count\" AND metric.labels.status != \"ok\""
+      filter          = "resource.type = \"cloud_function\" AND (resource.labels.function_name = \"${google_cloudfunctions2_function.function_apartments.name}\" OR resource.labels.function_name = \"${google_cloudfunctions2_function.function_cars.name}\") AND metric.type = \"cloudfunctions.googleapis.com/function/execution_count\" AND metric.labels.status != \"ok\""
       duration        = "60s"
       comparison      = "COMPARISON_GT"
       threshold_value = 0

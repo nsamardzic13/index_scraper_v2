@@ -12,24 +12,27 @@ client = Client()
 client.setup_logging()
 
 
-@functions_framework.http
-def main(request: Request):
+# @functions_framework.http
+# def main(request: Request):
+def main():
     category = os.environ["CATEGORY"]
     current_date = datetime.now().strftime("%Y-%m-%d")
 
-    requests_helper = RequestsHelper()
+    requests_helper = RequestsHelper(category=category)
 
     logging.info(
         f"Full refresh (wednesday, sunday): {requests_helper.full_refresh_flag}. DOW: {requests_helper.day_of_week}"
     )
     params = {
         "category": category,
-        "module": "real-estate",
-        "includeCityIds": "36bd1dbc-f301-4ae7-988e-171765d599f7",
         "page": "1",
         "sortOption": "4",
         "itemPerPage": requests_helper.items_per_page,
     }
+    # add additional params if available
+    for key, value in requests_helper.additional_params.items():
+        params[key] = value
+
     url = "https://www.index.hr/oglasi/api/aditem"
 
     json_data = requests_helper.get_json_response(
@@ -38,7 +41,6 @@ def main(request: Request):
     )
     max_count = json_data["count"]
     pages = max_count // requests_helper.items_per_page + 1
-
     logging.info(f"Fetching data for category: {category}")
     logging.info(f"Max count: {max_count}, Pages: {pages}")
     for page in range(1, pages + 1):
@@ -52,7 +54,6 @@ def main(request: Request):
             continue
 
         df = requests_helper.modify_df(df)
-
         # enforce schema
         df = requests_helper.enforce_schema(df)
 
@@ -87,3 +88,6 @@ def main(request: Request):
 
     result = {"message": "Success"}
     return jsonify(result), 200
+
+
+main()
