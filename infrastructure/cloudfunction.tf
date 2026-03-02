@@ -71,7 +71,7 @@ resource "google_cloud_scheduler_job" "daily_trigger_apartments" {
 resource "google_cloud_scheduler_job" "daily_trigger_cars" {
   name        = "${var.project_name}-cars-daily-trigger"
   description = "Daily trigger for Cloud Function at 2AM UTC"
-  schedule    = "0 2 * * *"
+  schedule    = "30 2 * * *"
   time_zone   = "UTC"
 
   http_target {
